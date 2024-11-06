@@ -11,12 +11,14 @@ import { makeHeader } from '@aztec/circuits.js/testing';
 import { randomInt } from '@aztec/foundation/crypto';
 import { Fr, Point } from '@aztec/foundation/fields';
 import { BenchmarkingContractArtifact } from '@aztec/noir-contracts.js/Benchmarking';
+import { TestContractArtifact } from '@aztec/noir-contracts.js/Test';
 
 import { type IncomingNoteDao } from './incoming_note_dao.js';
 import { randomIncomingNoteDao } from './incoming_note_dao.test.js';
 import { type OutgoingNoteDao } from './outgoing_note_dao.js';
 import { randomOutgoingNoteDao } from './outgoing_note_dao.test.js';
 import { type PxeDatabase } from './pxe_database.js';
+import { FunctionType } from '@aztec/foundation/abi';
 
 /**
  * A common test suite for a PXE database.
@@ -389,6 +391,17 @@ export function describePxeDatabase(getDatabase: () => PxeDatabase) {
         const id = Fr.random();
         await database.addContractArtifact(id, artifact);
         await expect(database.getContractArtifact(id)).resolves.toEqual(artifact);
+      });
+
+      it('does not store a contract artifact with a duplicate private function selector', async () => {
+        const artifact = TestContractArtifact;
+        const index = artifact.functions.findIndex(fn => fn.functionType === FunctionType.PRIVATE);
+
+        const copiedFn = structuredClone(artifact.functions[index]);
+        artifact.functions.push(copiedFn);
+
+        const id = Fr.random();
+        await expect(database.addContractArtifact(id, artifact)).rejects.toThrow('Repeated function selectors of private functions');
       });
 
       it('stores a contract instance', async () => {

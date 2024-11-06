@@ -9,7 +9,7 @@ import {
   type TaggingSecret,
   computePoint,
 } from '@aztec/circuits.js';
-import { type ContractArtifact } from '@aztec/foundation/abi';
+import { type ContractArtifact, FunctionSelector, FunctionType } from '@aztec/foundation/abi';
 import { toBufferBE } from '@aztec/foundation/bigint-buffer';
 import { Fr } from '@aztec/foundation/fields';
 import {
@@ -130,6 +130,16 @@ export class KVPxeDatabase implements PxeDatabase {
   }
 
   public async addContractArtifact(id: Fr, contract: ContractArtifact): Promise<void> {
+    const privateSelectors = contract.functions
+      .filter(functionArtifact => functionArtifact.functionType === FunctionType.PRIVATE)
+      .map(privateFunctionArtifact =>
+        FunctionSelector.fromNameAndParameters(privateFunctionArtifact.name, privateFunctionArtifact.parameters).toString(),
+      );
+
+    if (privateSelectors.length !== new Set(privateSelectors).size) {
+      throw new Error('Repeated function selectors of private functions');
+    }
+
     await this.#contractArtifacts.set(id.toString(), contractArtifactToBuffer(contract));
   }
 
