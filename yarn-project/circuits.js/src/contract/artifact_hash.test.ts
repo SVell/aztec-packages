@@ -30,7 +30,7 @@ describe('ArtifactHash', () => {
 
     for (let i = 0; i < 1000; i++) {
       expect(computeArtifactHash(testArtifact).toString()).toMatchInlineSnapshot(
-        `"0x28faac60666e51e4c1f46439d154831c5cbef6b10cdae51a25aa41cb4fa50f65"`,
+        `"0x24f70e42bf3a55d67eea361b7da4a1186a4dfd1f0a5c63dc5a1574a0b1310ce8"`,
       );
     }
   });
@@ -43,7 +43,7 @@ describe('ArtifactHash', () => {
     const testArtifact = loadContractArtifact(content);
 
     expect(computeArtifactHash(testArtifact).toString()).toMatchInlineSnapshot(
-      `"0x28faac60666e51e4c1f46439d154831c5cbef6b10cdae51a25aa41cb4fa50f65"`,
+      `"0x24f70e42bf3a55d67eea361b7da4a1186a4dfd1f0a5c63dc5a1574a0b1310ce8"`,
     );
   });
 });
