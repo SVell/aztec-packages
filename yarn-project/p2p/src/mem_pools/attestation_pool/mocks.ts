@@ -38,6 +38,6 @@ export const mockAttestation = async (
     .toString('hex')}`;
   const sigString = await signer.signMessage({ message });
 
-  const signature = Signature.from0xString(sigString);
+  const signature = Signature.fromString(sigString);
   return new BlockAttestation(payload, signature);
 };

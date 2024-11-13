@@ -1,5 +1,6 @@
 import { makeTuple } from '@aztec/foundation/array';
 import { BufferReader, type Tuple, serializeToBuffer } from '@aztec/foundation/serialize';
+import { bufferToHex, hexToBuffer } from '@aztec/foundation/string';
 import { type FieldsOf } from '@aztec/foundation/types';
 
 import {
@@ -89,7 +90,7 @@ export class BaseRollupHints {
    * @returns The instance serialized to a hex string.
    */
   toString() {
-    return this.toBuffer().toString('hex');
+    return bufferToHex(this.toBuffer());
   }
 
   static fromBuffer(buffer: Buffer | BufferReader): BaseRollupHints {
@@ -110,7 +111,7 @@ export class BaseRollupHints {
   }
 
   static fromString(str: string) {
-    return BaseRollupHints.fromBuffer(Buffer.from(str, 'hex'));
+    return BaseRollupHints.fromBuffer(hexToBuffer(str));
   }
 
   static empty() {

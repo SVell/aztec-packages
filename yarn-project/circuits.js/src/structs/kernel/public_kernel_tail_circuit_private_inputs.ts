@@ -1,4 +1,5 @@
 import { BufferReader, type Tuple, serializeToBuffer } from '@aztec/foundation/serialize';
+import { bufferToHex, hexToBuffer } from '@aztec/foundation/string';
 
 import {
   L1_TO_L2_MSG_TREE_HEIGHT,
@@ -60,11 +61,11 @@ export class PublicKernelTailCircuitPrivateInputs {
   }
 
   toString() {
-    return this.toBuffer().toString('hex');
+    return bufferToHex(this.toBuffer());
   }
 
   static fromString(str: string) {
-    return PublicKernelTailCircuitPrivateInputs.fromBuffer(Buffer.from(str, 'hex'));
+    return PublicKernelTailCircuitPrivateInputs.fromBuffer(hexToBuffer(str));
   }
 
   static fromBuffer(buffer: Buffer | BufferReader) {

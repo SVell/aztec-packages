@@ -1,4 +1,4 @@
-import { Body, L2Block, type TxEffect, type TxHash, TxReceipt } from '@aztec/circuit-types';
+import { Body, L2Block, L2BlockHash, type TxEffect, type TxHash, TxReceipt } from '@aztec/circuit-types';
 import { AppendOnlyTreeSnapshot, type AztecAddress, Header, INITIAL_L2_BLOCK_NUM } from '@aztec/circuits.js';
 import { createDebugLogger } from '@aztec/foundation/log';
 import { type AztecKVStore, type AztecMap, type AztecSingleton, type Range } from '@aztec/kv-store';
@@ -199,7 +199,7 @@ export class BlockStore {
       TxReceipt.statusFromRevertCode(tx.revertCode),
       '',
       tx.transactionFee.toBigInt(),
-      block.data.hash().toBuffer(),
+      L2BlockHash.fromField(block.data.hash()),
       block.data.number,
     );
   }

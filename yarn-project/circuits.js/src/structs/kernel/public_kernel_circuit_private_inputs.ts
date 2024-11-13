@@ -1,4 +1,5 @@
 import { BufferReader, serializeToBuffer } from '@aztec/foundation/serialize';
+import { bufferToHex, hexToBuffer } from '@aztec/foundation/string';
 
 import { EnqueuedCallData } from './enqueued_call_data.js';
 import { PublicKernelData } from './public_kernel_data.js';
@@ -31,7 +32,7 @@ export class PublicKernelCircuitPrivateInputs {
    * @returns - Hex string representation of the object.
    */
   toString() {
-    return this.toBuffer().toString('hex');
+    return bufferToHex(this.toBuffer());
   }
 
   /**
@@ -52,7 +53,7 @@ export class PublicKernelCircuitPrivateInputs {
    * @returns - Deserialized object.
    */
   static fromString(str: string) {
-    return PublicKernelCircuitPrivateInputs.fromBuffer(Buffer.from(str, 'hex'));
+    return PublicKernelCircuitPrivateInputs.fromBuffer(hexToBuffer(str));
   }
 
   /**

@@ -19,8 +19,8 @@ function shouldBehaveLikeFunctionL2Logs(
     it('can encode L2Logs to JSON and back', () => {
       const l2Logs = FunctionL2Logs.random(3);
 
-      const buffer = JSON.stringify(l2Logs.toJSON());
-      const recovered = FunctionL2Logs.fromJSON(JSON.parse(buffer));
+      const buffer = JSON.stringify(l2Logs);
+      const recovered = FunctionL2Logs.schema.parse(JSON.parse(buffer));
 
       expect(recovered).toEqual(l2Logs);
     });

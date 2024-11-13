@@ -18,8 +18,8 @@ function shouldBehaveLikeTxL2Logs(
     it('can encode TxL2Logs to JSON and back', () => {
       const l2Logs = TxL2Logs.random(4, 2);
 
-      const buffer = jsonStringify(l2Logs.toJSON());
-      const recovered = TxL2Logs.fromJSON(JSON.parse(buffer));
+      const buffer = jsonStringify(l2Logs);
+      const recovered = TxL2Logs.schema.parse(JSON.parse(buffer));
 
       expect(recovered).toEqual(l2Logs);
     });

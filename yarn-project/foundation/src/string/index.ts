@@ -13,3 +13,7 @@ export function isHex(str: string): boolean {
 export function hexToBuffer(str: string): Buffer {
   return Buffer.from(withoutHexPrefix(str), 'hex');
 }
+
+export function bufferToHex(buffer: Buffer): `0x${string}` {
+  return `0x${buffer.toString('hex')}`;
+}

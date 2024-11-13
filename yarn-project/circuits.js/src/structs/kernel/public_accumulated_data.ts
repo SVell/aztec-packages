@@ -2,6 +2,7 @@ import { makeTuple } from '@aztec/foundation/array';
 import { arraySerializedSizeOfNonEmpty } from '@aztec/foundation/collection';
 import { type Fr } from '@aztec/foundation/fields';
 import { BufferReader, FieldReader, type Tuple, serializeToBuffer } from '@aztec/foundation/serialize';
+import { bufferToHex, hexToBuffer } from '@aztec/foundation/string';
 
 import { inspect } from 'util';
 
@@ -99,7 +100,7 @@ export class PublicAccumulatedData {
   }
 
   toString() {
-    return this.toBuffer().toString('hex');
+    return bufferToHex(this.toBuffer());
   }
 
   isEmpty(): boolean {
@@ -196,7 +197,7 @@ export class PublicAccumulatedData {
    * @returns Deserialized object.
    */
   static fromString(str: string) {
-    return this.fromBuffer(Buffer.from(str, 'hex'));
+    return this.fromBuffer(hexToBuffer(str));
   }
 
   static empty() {
@@ -257,7 +258,7 @@ export class PublicAccumulatedDataArrayLengths {
   }
 
   toString() {
-    return this.toBuffer().toString('hex');
+    return bufferToHex(this.toBuffer());
   }
 
   isEmpty(): boolean {
@@ -312,7 +313,7 @@ export class PublicAccumulatedDataArrayLengths {
    * @returns Deserialized object.
    */
   static fromString(str: string) {
-    return this.fromBuffer(Buffer.from(str, 'hex'));
+    return this.fromBuffer(hexToBuffer(str));
   }
 
   static empty() {

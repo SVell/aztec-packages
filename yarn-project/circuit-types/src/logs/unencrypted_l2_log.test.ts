@@ -9,4 +9,13 @@ describe('UnencryptedL2Log', () => {
 
     expect(recovered).toEqual(l2Logs);
   });
+
+  it('can encode to JSON and back', () => {
+    const l2Logs = UnencryptedL2Log.random();
+
+    const buffer = JSON.stringify(l2Logs);
+    const recovered = UnencryptedL2Log.schema.parse(JSON.parse(buffer));
+
+    expect(recovered).toEqual(l2Logs);
+  });
 });

@@ -1,6 +1,7 @@
 import { AztecAddress } from '@aztec/foundation/aztec-address';
 import { type Fr } from '@aztec/foundation/fields';
 import { BufferReader, FieldReader, serializeToBuffer } from '@aztec/foundation/serialize';
+import { bufferToHex, hexToBuffer } from '@aztec/foundation/string';
 
 import { inspect } from 'util';
 
@@ -68,11 +69,11 @@ export class PublicKernelCircuitPublicInputs {
   }
 
   toString() {
-    return this.toBuffer().toString('hex');
+    return bufferToHex(this.toBuffer());
   }
 
   static fromString(str: string) {
-    return PublicKernelCircuitPublicInputs.fromBuffer(Buffer.from(str, 'hex'));
+    return PublicKernelCircuitPublicInputs.fromBuffer(hexToBuffer(str));
   }
 
   /**

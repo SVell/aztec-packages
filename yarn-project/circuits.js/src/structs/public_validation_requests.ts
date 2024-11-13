@@ -2,6 +2,7 @@ import { makeTuple } from '@aztec/foundation/array';
 import { arraySerializedSizeOfNonEmpty } from '@aztec/foundation/collection';
 import { type Fr } from '@aztec/foundation/fields';
 import { BufferReader, FieldReader, type Tuple, serializeToBuffer } from '@aztec/foundation/serialize';
+import { bufferToHex, hexToBuffer } from '@aztec/foundation/string';
 
 import { inspect } from 'util';
 
@@ -71,7 +72,7 @@ export class PublicValidationRequests {
   }
 
   toString() {
-    return this.toBuffer().toString('hex');
+    return bufferToHex(this.toBuffer());
   }
 
   static fromFields(fields: Fr[] | FieldReader) {
@@ -109,7 +110,7 @@ export class PublicValidationRequests {
    * @returns Deserialized object.
    */
   static fromString(str: string) {
-    return PublicValidationRequests.fromBuffer(Buffer.from(str, 'hex'));
+    return PublicValidationRequests.fromBuffer(hexToBuffer(str));
   }
 
   static empty() {
@@ -184,7 +185,7 @@ export class PublicValidationRequestArrayLengths {
   }
 
   toString() {
-    return this.toBuffer().toString('hex');
+    return bufferToHex(this.toBuffer());
   }
 
   static fromFields(fields: Fr[] | FieldReader) {
@@ -220,7 +221,7 @@ export class PublicValidationRequestArrayLengths {
    * @returns Deserialized object.
    */
   static fromString(str: string) {
-    return PublicValidationRequestArrayLengths.fromBuffer(Buffer.from(str, 'hex'));
+    return PublicValidationRequestArrayLengths.fromBuffer(hexToBuffer(str));
   }
 
   static empty() {
