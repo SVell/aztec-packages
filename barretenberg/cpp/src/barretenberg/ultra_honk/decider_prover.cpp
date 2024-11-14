@@ -60,8 +60,8 @@ template <IsUltraFlavor Flavor> void DeciderProver_<Flavor>::execute_pcs_rounds(
     if (proving_key->proving_key.commitment_key == nullptr) {
         proving_key->proving_key.commitment_key =
             std::make_shared<CommitmentKey>(proving_key->proving_key.circuit_size);
+        vinfo("made commitment key");
     }
-    vinfo("made commitment key");
     using OpeningClaim = ProverOpeningClaim<Curve>;
 
     OpeningClaim prover_opening_claim;

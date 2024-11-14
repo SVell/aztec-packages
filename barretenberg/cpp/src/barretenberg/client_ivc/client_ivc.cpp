@@ -173,12 +173,21 @@ void ClientIVC::accumulate(ClientCircuit& circuit, const std::shared_ptr<Verific
     // Construct the proving key for circuit
     std::shared_ptr<DeciderProvingKey> proving_key;
     if (!initialized) {
+        info("CIVC is NOT initialized");
         proving_key = std::make_shared<DeciderProvingKey>(circuit, trace_settings);
         trace_usage_tracker = ExecutionTraceUsageTracker(trace_settings);
     } else {
-        proving_key = std::make_shared<DeciderProvingKey>(
-            circuit, trace_settings, fold_output.accumulator->proving_key.commitment_key);
+        info("CIVC is YES IT IS initialized");
+        proving_key = std::make_shared<DeciderProvingKey>(circuit, trace_settings);
     }
+
+    if (!bn254_commitment_key) {
+        info("commitment key being initialized");
+        bn254_commitment_key = std::make_shared<typename MegaFlavor::CommitmentKey>(proving_key->dyadic_circuit_size);
+    } else {
+        info("commitment key already initialized");
+    }
+    proving_key->proving_key.commitment_key = bn254_commitment_key;
 
     vinfo("getting honk vk... precomputed?: ", precomputed_vk);
     // Update the accumulator trace usage based on the present circuit
@@ -186,6 +195,7 @@ void ClientIVC::accumulate(ClientCircuit& circuit, const std::shared_ptr<Verific
 
     // Set the verification key from precomputed if available, else compute it
     honk_vk = precomputed_vk ? precomputed_vk : std::make_shared<VerificationKey>(proving_key->proving_key);
+    vinfo("set honk vk");
     if (mock_vk) {
         honk_vk->set_metadata(proving_key->proving_key);
     }

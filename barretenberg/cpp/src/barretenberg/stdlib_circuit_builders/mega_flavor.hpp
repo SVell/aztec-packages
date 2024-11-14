@@ -581,7 +581,9 @@ class MegaFlavor {
         VerificationKey(ProvingKey& proving_key)
         {
             set_metadata(proving_key);
+            vinfo("set metadata in vk constructor");
             if (proving_key.commitment_key == nullptr) {
+                vinfo("commitment key in proving key is null; setting commitment key");
                 proving_key.commitment_key = std::make_shared<CommitmentKey>(proving_key.circuit_size);
             }
             for (auto [polynomial, commitment] : zip_view(proving_key.polynomials.get_precomputed(), this->get_all())) {

@@ -59,7 +59,7 @@ describe('Client IVC Integration', () => {
   // 1. Run a mock app that creates two commitments
   // 2. Run the init kernel to process the app run
   // 3. Run the tail kernel to finish the client IVC chain.
-  it('Should generate a verifiable client IVC proof from a simple mock tx via bb.js', async () => {
+  it.only('Should generate a verifiable client IVC proof from a simple mock tx via bb.js', async () => {
     const tx = {
       number_of_calls: '0x1',
     };

@@ -125,32 +125,32 @@ template <typename FF_> class MegaArith {
     struct ClientIvcBenchStructuredBlockSizes : public MegaTraceBlocks<uint32_t> {
         ClientIvcBenchStructuredBlockSizes()
         {
-            // 2^19
-            this->ecc_op = 1 << 10;
-            this->pub_inputs = 1 << 7;
-            this->busread = 1 << 7;
-            this->arithmetic = 198000;
-            this->delta_range = 90000;
-            this->elliptic = 9000;
-            this->aux = 136000;
-            this->poseidon2_external = 2500;
-            this->poseidon2_internal = 14000;
-            this->lookup = 72000;
-            this->overflow = 0;
-
-            // Additional structurings for testing
-            // // 2^18 (Only viable if no 2^19 circuit is used!)
+            // // 2^19
             // this->ecc_op = 1 << 10;
-            // this->pub_inputs = 1 << 6;
-            // this->busread = 1 << 6;
-            // this->arithmetic = 84000;
-            // this->delta_range = 45000;
+            // this->pub_inputs = 1 << 7;
+            // this->busread = 1 << 7;
+            // this->arithmetic = 198000;
+            // this->delta_range = 90000;
             // this->elliptic = 9000;
-            // this->aux = 68000;
+            // this->aux = 136000;
             // this->poseidon2_external = 2500;
             // this->poseidon2_internal = 14000;
-            // this->lookup = 36000;
+            // this->lookup = 72000;
             // this->overflow = 0;
+
+            // Additional structurings for testing
+            // 2^18 (Only viable if no 2^19 circuit is used!)
+            this->ecc_op = 1 << 10;
+            this->pub_inputs = 1 << 6;
+            this->busread = 1 << 6;
+            this->arithmetic = 84000;
+            this->delta_range = 45000;
+            this->elliptic = 9000;
+            this->aux = 68000;
+            this->poseidon2_external = 2500;
+            this->poseidon2_internal = 14000;
+            this->lookup = 36000;
+            this->overflow = 0;
 
             // // 2^20
             // this->ecc_op = 1 << 11;
