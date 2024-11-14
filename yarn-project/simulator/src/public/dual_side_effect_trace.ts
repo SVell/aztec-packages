@@ -232,12 +232,8 @@ export class DualSideEffectTrace implements PublicSideEffectTraceInterface {
     this.enqueuedCallTrace.traceEnqueuedCall(publicCallRequest, calldata, reverted);
   }
 
-  public mergeSuccessfulForkedTrace(nestedTrace: this) {
-    this.enqueuedCallTrace.mergeSuccessfulForkedTrace(nestedTrace.enqueuedCallTrace);
-  }
-
-  public mergeRevertedForkedTrace(nestedTrace: this) {
-    this.enqueuedCallTrace.mergeRevertedForkedTrace(nestedTrace.enqueuedCallTrace);
+  public mergeForkedTrace(nestedTrace: this, reverted: boolean = false) {
+    this.enqueuedCallTrace.mergeForkedTrace(nestedTrace.enqueuedCallTrace, reverted);
   }
 
   /**
