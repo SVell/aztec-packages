@@ -14,10 +14,7 @@ import { Timer } from '@aztec/foundation/timer';
 import { EnqueuedCallSimulator } from './enqueued_call_simulator.js';
 import { type PublicExecutor } from './executor.js';
 import { type WorldStateDB } from './public_db_sources.js';
-import { type PublicKernelCircuitSimulator } from './public_kernel_circuit_simulator.js';
-import { PublicKernelTailSimulator } from './public_kernel_tail_simulator.js';
 import { PublicTxContext } from './public_tx_context.js';
-import { generateAvmCircuitPublicInputs, generateAvmCircuitPublicInputsDeprecated, runMergeKernelCircuit } from './utils.js';
 
 export type ProcessedPhase = {
   phase: TxExecutionPhase;
@@ -42,19 +39,16 @@ export class PublicTxSimulator {
 
   constructor(
     private db: MerkleTreeReadOperations,
-    private publicKernelSimulator: PublicKernelCircuitSimulator,
     private globalVariables: GlobalVariables,
     private worldStateDB: WorldStateDB,
     private enqueuedCallSimulator: EnqueuedCallSimulator,
-    private publicKernelTailSimulator: PublicKernelTailSimulator,
   ) {
-    this.log = createDebugLogger(`aztec:sequencer`);
+    this.log = createDebugLogger(`aztec:public_tx_simulator`);
   }
 
   static create(
     db: MerkleTreeReadOperations,
     publicExecutor: PublicExecutor,
-    publicKernelSimulator: PublicKernelCircuitSimulator,
     globalVariables: GlobalVariables,
     historicalHeader: Header,
     worldStateDB: WorldStateDB,
@@ -69,16 +63,7 @@ export class PublicTxSimulator {
       realAvmProvingRequests,
     );
 
-    const publicKernelTailSimulator = PublicKernelTailSimulator.create(db, publicKernelSimulator);
-
-    return new PublicTxSimulator(
-      db,
-      publicKernelSimulator,
-      globalVariables,
-      worldStateDB,
-      enqueuedCallSimulator,
-      publicKernelTailSimulator,
-    );
+    return new PublicTxSimulator(db, globalVariables, worldStateDB, enqueuedCallSimulator);
   }
 
   async process(tx: Tx): Promise<PublicTxResult> {
@@ -96,22 +81,9 @@ export class PublicTxSimulator {
 
     const endStateReference = await this.db.getStateReference();
 
-    const tailKernelOutput = await this.publicKernelTailSimulator.simulate(context.latestPublicKernelOutput);
-
-    generateAvmCircuitPublicInputsDeprecated(
-      tx,
-      tailKernelOutput,
-      context.getGasUsedForFee(),
-      context.getFinalTransactionFee(),
-    );
-
-    const gasUsed = {
-      totalGas: context.getActualGasUsed(),
-      teardownGas: context.teardownGasUsed,
-    };
     return {
-      avmProvingRequest: await context.generateProvingRequest(endStateReference),
-      gasUsed,
+      avmProvingRequest: context.generateProvingRequest(endStateReference),
+      gasUsed: { totalGas: context.getActualGasUsed(), teardownGas: context.teardownGasUsed },
       revertCode: context.revertCode,
       revertReason: context.revertReason,
       processedPhases: processedPhases,
@@ -214,14 +186,16 @@ export class PublicTxSimulator {
         /*transactionFee=*/ context.getTransactionFee(),
         enqueuedCallStateManager,
       );
+      if (context.avmProvingRequest === undefined) {
+        // Propagate the very first avmProvingRequest of the tx for now.
+        // Eventually this will be the proof for the entire public portion of the transaction.
+        context.avmProvingRequest = enqueuedCallResult.avmProvingRequest;
+      }
 
       txStateManager.traceEnqueuedCall(callRequest, executionRequest.args, enqueuedCallResult.reverted!);
 
       context.consumeGas(enqueuedCallResult.gasUsed);
       returnValues.push(enqueuedCallResult.returnValues);
-      // Propagate only one avmProvingRequest of a function call for now, so that we know it's still provable.
-      // Eventually this will be the proof for the entire public portion of the transaction.
-      context.avmProvingRequest = enqueuedCallResult.avmProvingRequest;
       if (enqueuedCallResult.reverted) {
         reverted = true;
         const culprit = `${executionRequest.callContext.contractAddress}:${executionRequest.callContext.functionSelector}`;
@@ -234,7 +208,7 @@ export class PublicTxSimulator {
         // FIXME: we shouldn't need to directly modify worldStateDb here!
         await this.worldStateDB.removeNewContracts(tx);
         // FIXME: we shouldn't be modifying the transaction here!
-        tx.filterRevertedLogs(context.latestPublicKernelOutput);
+        //tx.filterRevertedLogs(context.latestPublicKernelOutput);
         // Enqueeud call reverted. Discard state updates and accumulated side effects, but keep hints traced for the circuit.
         txStateManager.rejectForkedState(enqueuedCallStateManager);
       } else {
@@ -243,12 +217,6 @@ export class PublicTxSimulator {
         // Enqueued call succeeded! Merge in any state updates made in the forked state manager.
         txStateManager.mergeForkedState(enqueuedCallStateManager);
       }
-
-      context.latestPublicKernelOutput = await runMergeKernelCircuit(
-        context.latestPublicKernelOutput,
-        enqueuedCallResult.kernelOutput,
-        this.publicKernelSimulator,
-      );
     }
 
     return {

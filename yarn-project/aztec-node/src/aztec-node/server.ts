@@ -735,7 +735,6 @@ export class AztecNodeService implements AztecNode {
     const prevHeader = (await this.blockSource.getBlock(-1))?.header;
     const publicProcessorFactory = new PublicProcessorFactory(
       this.contractDataSource,
-      new WASMSimulator(),
       this.telemetry,
     );
 

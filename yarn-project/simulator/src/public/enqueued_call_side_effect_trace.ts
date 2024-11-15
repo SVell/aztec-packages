@@ -70,7 +70,6 @@ import { makeTuple } from '@aztec/foundation/array';
 import { padArrayEnd } from '@aztec/foundation/collection';
 import { Fr } from '@aztec/foundation/fields';
 import { createDebugLogger } from '@aztec/foundation/log';
-import { type Tuple } from '@aztec/foundation/serialize';
 
 import { assert } from 'console';
 
@@ -631,9 +630,9 @@ export class PublicEnqueuedCallSideEffectTrace implements PublicSideEffectTraceI
     /** How much gas was available for this public execution. */
     gasLimits: GasSettings,
     /** Call requests for setup phase. */
-    publicSetupCallRequests: Tuple<PublicCallRequest, typeof MAX_ENQUEUED_CALLS_PER_TX>,
+    publicSetupCallRequests: PublicCallRequest[],
     /** Call requests for app logic phase. */
-    publicAppLogicCallRequests: Tuple<PublicCallRequest, typeof MAX_ENQUEUED_CALLS_PER_TX>,
+    publicAppLogicCallRequests: PublicCallRequest[],
     /** Call request for teardown phase. */
     publicTeardownCallRequest: PublicCallRequest,
     /** End tree snapshots. */
@@ -653,8 +652,8 @@ export class PublicEnqueuedCallSideEffectTrace implements PublicSideEffectTraceI
       startTreeSnapshots,
       startGasUsed,
       gasLimits,
-      publicSetupCallRequests,
-      publicAppLogicCallRequests,
+      padArrayEnd(publicSetupCallRequests, PublicCallRequest.empty(), MAX_ENQUEUED_CALLS_PER_TX),
+      padArrayEnd(publicAppLogicCallRequests, PublicCallRequest.empty(), MAX_ENQUEUED_CALLS_PER_TX),
       publicTeardownCallRequest,
       /*previousNonRevertibleAccumulatedDataArrayLengths=*/ PrivateToAvmAccumulatedDataArrayLengths.empty(),
       /*previousRevertibleAccumulatedDataArrayLengths=*/ PrivateToAvmAccumulatedDataArrayLengths.empty(),

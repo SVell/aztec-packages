@@ -13,9 +13,9 @@ import {
   Gas,
   type GasSettings,
   type GlobalVariables,
+  type PrivateToPublicAccumulatedData,
   PublicAccumulatedDataArrayLengths,
   type PublicCallRequest,
-  type PublicKernelCircuitPublicInputs,
   PublicValidationRequestArrayLengths,
   RevertCode,
   type StateReference,
@@ -30,7 +30,12 @@ import { DualSideEffectTrace } from './dual_side_effect_trace.js';
 import { PublicEnqueuedCallSideEffectTrace } from './enqueued_call_side_effect_trace.js';
 import { type WorldStateDB } from './public_db_sources.js';
 import { PublicSideEffectTrace } from './side_effect_trace.js';
-import { generateAvmCircuitPublicInputs, getCallRequestsByPhase, getExecutionRequestsByPhase, getPublicKernelCircuitPublicInputs } from './utils.js';
+import {
+  convertPrivateToPublicAccumulatedData,
+  generateAvmCircuitPublicInputs,
+  getCallRequestsByPhase,
+  getExecutionRequestsByPhase,
+} from './utils.js';
 
 export class PublicTxContext {
   private log: DebugLogger;
@@ -49,11 +54,11 @@ export class PublicTxContext {
 
   constructor(
     public readonly state: PhaseStateManager,
-    public readonly tx: Tx, // tmp hack
+    public readonly tx: Tx, // TODO(dbanks12): remove
     public readonly globalVariables: GlobalVariables,
-    public readonly constants: CombinedConstantData, // tmp hack
+    public readonly constants: CombinedConstantData, // TODO(dbanks12): remove
     public readonly startStateReference: StateReference,
-    startGasUsed: Gas,
+    private readonly startGasUsed: Gas,
     private readonly gasSettings: GasSettings,
     private readonly setupCallRequests: PublicCallRequest[],
     private readonly appLogicCallRequests: PublicCallRequest[],
@@ -61,8 +66,8 @@ export class PublicTxContext {
     private readonly setupExecutionRequests: PublicExecutionRequest[],
     private readonly appLogicExecutionRequests: PublicExecutionRequest[],
     private readonly teardownExecutionRequests: PublicExecutionRequest[],
-    private firstPublicKernelOutput: PublicKernelCircuitPublicInputs,
-    public latestPublicKernelOutput: PublicKernelCircuitPublicInputs,
+    private readonly nonRevertibleAccumulatedDataFromPrivate: PrivateToPublicAccumulatedData,
+    private readonly revertibleAccumulatedDataFromPrivate: PrivateToPublicAccumulatedData,
     public trace: PublicEnqueuedCallSideEffectTrace,
   ) {
     this.log = createDebugLogger(`aztec:public_tx_context`);
@@ -75,29 +80,25 @@ export class PublicTxContext {
     tx: Tx,
     globalVariables: GlobalVariables,
   ) {
-    const privateKernelOutput = tx.data;
-    const firstPublicKernelOutput = getPublicKernelCircuitPublicInputs(privateKernelOutput, globalVariables);
-
-    const nonRevertibleNullifiersFromPrivate = firstPublicKernelOutput.endNonRevertibleData.nullifiers
-      .filter(n => !n.isEmpty())
-      .map(n => n.value);
-    const _revertibleNullifiersFromPrivate = firstPublicKernelOutput.end.nullifiers
-      .filter(n => !n.isEmpty())
-      .map(n => n.value);
-
-    // During SETUP, non revertible side effects from private are our "previous data"
-    const prevAccumulatedData = firstPublicKernelOutput.endNonRevertibleData;
-    const previousValidationRequestArrayLengths = PublicValidationRequestArrayLengths.new(
-      firstPublicKernelOutput.validationRequests,
+    const nonRevertibleAccumulatedDataFromPrivate = convertPrivateToPublicAccumulatedData(
+      tx.data.forPublic!.nonRevertibleAccumulatedData,
+    );
+    const revertibleAccumulatedDataFromPrivate = convertPrivateToPublicAccumulatedData(
+      tx.data.forPublic!.revertibleAccumulatedData,
     );
 
-    const previousAccumulatedDataArrayLengths = PublicAccumulatedDataArrayLengths.new(prevAccumulatedData);
+    const nonRevertibleNullifiersFromPrivate = nonRevertibleAccumulatedDataFromPrivate.nullifiers
+      .filter(n => !n.isEmpty())
+      .map(n => n.value);
+    const _revertibleNullifiersFromPrivate = revertibleAccumulatedDataFromPrivate.nullifiers
+      .filter(n => !n.isEmpty())
+      .map(n => n.value);
 
     const innerCallTrace = new PublicSideEffectTrace();
     const enqueuedCallTrace = new PublicEnqueuedCallSideEffectTrace(
       /*startSideEffectCounter=*/ 0,
-      previousValidationRequestArrayLengths,
-      previousAccumulatedDataArrayLengths,
+      PublicValidationRequestArrayLengths.empty(),
+      PublicAccumulatedDataArrayLengths.new(nonRevertibleAccumulatedDataFromPrivate),
     );
     const trace = new DualSideEffectTrace(innerCallTrace, enqueuedCallTrace);
 
@@ -122,8 +123,8 @@ export class PublicTxContext {
       getExecutionRequestsByPhase(tx, TxExecutionPhase.SETUP),
       getExecutionRequestsByPhase(tx, TxExecutionPhase.APP_LOGIC),
       getExecutionRequestsByPhase(tx, TxExecutionPhase.TEARDOWN),
-      firstPublicKernelOutput,
-      firstPublicKernelOutput,
+      tx.data.forPublic!.nonRevertibleAccumulatedData,
+      tx.data.forPublic!.revertibleAccumulatedData,
       enqueuedCallTrace,
     );
   }
@@ -258,25 +259,33 @@ export class PublicTxContext {
     return txFee;
   }
 
-  private async generateAvmCircuitPublicInputs(endStateReference: StateReference): Promise<AvmCircuitPublicInputs> {
-    assert(this.currentPhase === TxExecutionPhase.TEARDOWN, 'Can only get AvmCircuitPublicInputs after teardown (tx done)');
+  private generateAvmCircuitPublicInputs(endStateReference: StateReference): AvmCircuitPublicInputs {
+    assert(
+      this.currentPhase === TxExecutionPhase.TEARDOWN,
+      'Can only get AvmCircuitPublicInputs after teardown (tx done)',
+    );
     return generateAvmCircuitPublicInputs(
-      this.tx,
       this.trace,
       this.globalVariables,
       this.startStateReference,
+      this.startGasUsed,
+      this.gasSettings,
+      this.setupCallRequests,
+      this.appLogicCallRequests,
+      this.teardownCallRequests,
+      this.nonRevertibleAccumulatedDataFromPrivate,
+      this.revertibleAccumulatedDataFromPrivate,
       endStateReference,
-      this.gasUsed,
+      /*endGasUsed=*/ this.gasUsed,
       this.getFinalTransactionFee(),
       this.revertCode,
-      this.firstPublicKernelOutput,
     );
   }
 
-  async generateProvingRequest(endStateReference: StateReference): Promise<AvmProvingRequest> {
+  generateProvingRequest(endStateReference: StateReference): AvmProvingRequest {
     // TODO(dbanks12): Once we actually have tx-level proving, this will generate the entire
     // proving request for the first time
-    this.avmProvingRequest!.inputs.output = await this.generateAvmCircuitPublicInputs(endStateReference);
+    this.avmProvingRequest!.inputs.output = this.generateAvmCircuitPublicInputs(endStateReference);
     return this.avmProvingRequest!;
   }
 }
@@ -313,4 +322,3 @@ class PhaseStateManager {
     this.currentlyActiveStateManager = undefined;
   }
 }
-

@@ -31,12 +31,9 @@ import { Timer } from '@aztec/foundation/timer';
 import { ProtocolContractAddress } from '@aztec/protocol-contracts';
 import { Attributes, type TelemetryClient, type Tracer, trackSpan } from '@aztec/telemetry-client';
 
-import { type SimulationProvider } from '../providers/index.js';
 import { PublicExecutor } from './executor.js';
 import { computeFeePayerBalanceLeafSlot, computeFeePayerBalanceStorageSlot } from './fee_payment.js';
 import { WorldStateDB } from './public_db_sources.js';
-import { RealPublicKernelCircuitSimulator } from './public_kernel.js';
-import { type PublicKernelCircuitSimulator } from './public_kernel_circuit_simulator.js';
 import { PublicProcessorMetrics } from './public_processor_metrics.js';
 import { PublicTxSimulator } from './public_tx_simulator.js';
 
@@ -44,11 +41,7 @@ import { PublicTxSimulator } from './public_tx_simulator.js';
  * Creates new instances of PublicProcessor given the provided merkle tree db and contract data source.
  */
 export class PublicProcessorFactory {
-  constructor(
-    private contractDataSource: ContractDataSource,
-    private simulator: SimulationProvider,
-    private telemetryClient: TelemetryClient,
-  ) {}
+  constructor(private contractDataSource: ContractDataSource, private telemetryClient: TelemetryClient) {}
 
   /**
    * Creates a new instance of a PublicProcessor.
@@ -66,12 +59,10 @@ export class PublicProcessorFactory {
 
     const worldStateDB = new WorldStateDB(merkleTree, this.contractDataSource);
     const publicExecutor = new PublicExecutor(worldStateDB, telemetryClient);
-    const publicKernelSimulator = new RealPublicKernelCircuitSimulator(this.simulator);
 
     return PublicProcessor.create(
       merkleTree,
       publicExecutor,
-      publicKernelSimulator,
       globalVariables,
       historicalHeader,
       worldStateDB,
@@ -101,7 +92,6 @@ export class PublicProcessor {
   static create(
     db: MerkleTreeWriteOperations,
     publicExecutor: PublicExecutor,
-    publicKernelSimulator: PublicKernelCircuitSimulator,
     globalVariables: GlobalVariables,
     historicalHeader: Header,
     worldStateDB: WorldStateDB,
@@ -110,7 +100,6 @@ export class PublicProcessor {
     const enqueuedCallsProcessor = PublicTxSimulator.create(
       db,
       publicExecutor,
-      publicKernelSimulator,
       globalVariables,
       historicalHeader,
       worldStateDB,
